@@ -2,7 +2,6 @@ from os import environ
 from pathlib import Path
 
 from django.core.management.utils import get_random_secret_key
-from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 ######################################################################
@@ -35,7 +34,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     
     # Third-party apps
-    "unfold",
     "rest_framework",
     "rest_framework_simplejwt",
     "drf_spectacular",
@@ -129,7 +127,15 @@ USE_TZ = True
 ######################################################################
 # Staticfiles
 ######################################################################
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+# Media files
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 ######################################################################
 # Rest Framework
@@ -148,31 +154,7 @@ REST_FRAMEWORK = {
 }
 
 ######################################################################
-# Unfold
+# Admin
 ######################################################################
-UNFOLD = {
-    "SITE_HEADER": _("Real Wise Admin"),
-    "SITE_TITLE": _("Real Wise Admin"),
-    "SIDEBAR": {
-        "show_search": True,
-        "show_all_applications": True,
-        "navigation": [
-            {
-                "title": _("Navigation"),
-                "separator": False,
-                "items": [
-                    {
-                        "title": _("Users"),
-                        "icon": "person",
-                        "link": reverse_lazy("admin:backend_user_changelist"),
-                    },
-                    {
-                        "title": _("Groups"),
-                        "icon": "label",
-                        "link": reverse_lazy("admin:auth_group_changelist"),
-                    },
-                ],
-            },
-        ],
-    },
-}
+ADMIN_SITE_HEADER = _("Real Wise Admin")
+ADMIN_SITE_TITLE = _("Real Wise Admin")
