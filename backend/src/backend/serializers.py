@@ -1,4 +1,4 @@
-from .models import UserRole
+from .models import UserRole, Property
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -140,3 +140,12 @@ class UserCreateErrorSerializer(serializers.Serializer):
     password_retype = serializers.ListSerializer(
         child=serializers.CharField(), required=False
     )
+
+
+class PropertySerializer(serializers.ModelSerializer):
+    created_by = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Property
+        fields = "__all__"
+        read_only_fields = ("created_by", "created_at", "modified_at")
