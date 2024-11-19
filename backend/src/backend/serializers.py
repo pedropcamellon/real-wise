@@ -1,3 +1,4 @@
+from .models import UserRole
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -9,19 +10,27 @@ User = get_user_model()
 
 
 class UserCurrentSerializer(serializers.ModelSerializer):
+    roles = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ["username", "first_name", "last_name"]
+        fields = ["username", "email", "first_name", "last_name", "roles"]
+        read_only_fields = fields
+
+    def get_roles(self, obj):
+        return [role.name for role in obj.roles.all()]
 
 
 class UserCurrentErrorSerializer(serializers.Serializer):
     username = serializers.ListSerializer(child=serializers.CharField(), required=False)
+    email = serializers.ListSerializer(child=serializers.CharField(), required=False)
     first_name = serializers.ListSerializer(
         child=serializers.CharField(), required=False
     )
     last_name = serializers.ListSerializer(
         child=serializers.CharField(), required=False
     )
+    detail = serializers.CharField()
 
 
 class UserChangePasswordSerializer(serializers.ModelSerializer):
@@ -81,6 +90,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
     password_retype = serializers.CharField(
         style={"input_type": "password"}, write_only=True
     )
+    role = serializers.ChoiceField(
+        choices=UserRole.ROLE_CHOICES,
+        write_only=True,
+        required=False,
+        default=UserRole.USER,
+    )
 
     default_error_messages = {
         "password_mismatch": _("Password are not matching."),
@@ -89,14 +104,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["username", "password", "password_retype"]
+        fields = ["username", "email", "password", "password_retype", "role"]
 
     def validate(self, attrs):
         password_retype = attrs.pop("password_retype")
 
         try:
             validate_password(attrs.get("password"))
-        except exceptions.ValidationError:
+        except ValidationError:
             self.fail("password_invalid")
 
         if attrs["password"] == password_retype:
@@ -105,18 +120,22 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return self.fail("password_mismatch")
 
     def create(self, validated_data):
+        role = validated_data.pop("role", UserRole.USER)
+        password = validated_data.pop("password")
+
         with transaction.atomic():
             user = User.objects.create_user(**validated_data)
-
-            # By default newly registered accounts are inactive.
+            user.set_password(password)
             user.is_active = True
-            user.save(update_fields=["is_active"])
+            user.set_role(role)
+            user.save()
 
         return user
 
 
 class UserCreateErrorSerializer(serializers.Serializer):
     username = serializers.ListSerializer(child=serializers.CharField(), required=False)
+    email = serializers.ListSerializer(child=serializers.CharField(), required=False)
     password = serializers.ListSerializer(child=serializers.CharField(), required=False)
     password_retype = serializers.ListSerializer(
         child=serializers.CharField(), required=False
