@@ -35,7 +35,8 @@ const authOptions: AuthOptions = {
 
       session.user = {
         id: access.user_id,
-        username: token.username
+        username: token.username,
+        role: token.role
       }
 
       session.refreshToken = token.refresh
@@ -45,7 +46,11 @@ const authOptions: AuthOptions = {
     },
     jwt: async ({ token, user }) => {
       if (user?.username) {
-        return { ...token, ...user }
+        return { 
+          ...token, 
+          ...user,
+          role: user.role
+        }
       }
 
       // Refresh token
