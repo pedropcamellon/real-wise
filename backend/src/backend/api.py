@@ -4,6 +4,7 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 
 from .serializers import (
     UserChangePasswordErrorSerializer,
@@ -13,6 +14,7 @@ from .serializers import (
     UserCurrentErrorSerializer,
     UserCurrentSerializer,
 )
+from .models import UserRole
 
 User = get_user_model()
 
@@ -31,7 +33,6 @@ class UserViewSet(
     def get_permissions(self):
         if self.action == "create":
             return [AllowAny()]
-
         return super().get_permissions()
 
     def get_serializer_class(self):
@@ -41,7 +42,6 @@ class UserViewSet(
             return UserCurrentSerializer
         elif self.action == "change_password":
             return UserChangePasswordSerializer
-
         return super().get_serializer_class()
 
     @extend_schema(
@@ -51,6 +51,12 @@ class UserViewSet(
         }
     )
     def create(self, request, *args, **kwargs):
+        # Check if trying to create admin user
+        if request.data.get("role") == UserRole.ADMIN:
+            # For admin creation, user must be authenticated and be a superuser
+            if not request.user.is_authenticated or not request.user.is_superuser:
+                raise PermissionDenied("Only superusers can create admin users.")
+
         return super().create(request, *args, **kwargs)
 
     @extend_schema(
