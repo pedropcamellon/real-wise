@@ -91,3 +91,46 @@ class User(AbstractUser):
             return
         self.roles.clear()
         self.add_role(role_name)
+
+
+class Property(models.Model):
+    STATUS_CHOICES = [
+        ('on_market', _('On Market')),
+        ('off_market', _('Off Market')),
+    ]
+    PROPERTY_TYPES = [
+        ('residential', _('Residential')),
+        ('commercial', _('Commercial')),
+    ]
+
+    # Basic Information
+    title = models.CharField(_("title"), max_length=200)
+    description = models.TextField(_("description"))
+    property_type = models.CharField(_("property type"), max_length=20, choices=PROPERTY_TYPES)
+    status = models.CharField(_("status"), max_length=20, choices=STATUS_CHOICES, default='on_market')
+    
+    # Pricing and Size
+    price = models.DecimalField(_("price"), max_digits=12, decimal_places=2)
+    size = models.DecimalField(_("size"), max_digits=10, decimal_places=2)  # in square feet
+    
+    # Location
+    address = models.CharField(_("address"), max_length=255)
+    city = models.CharField(_("city"), max_length=100)
+    state = models.CharField(_("state"), max_length=100)
+    zip_code = models.CharField(_("zip code"), max_length=20)
+    latitude = models.DecimalField(_("latitude"), max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(_("longitude"), max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    # Metadata
+    created_by = models.ForeignKey(User, verbose_name=_("created by"), on_delete=models.PROTECT)
+    created_at = models.DateTimeField(_("created at"), auto_now_add=True)
+    modified_at = models.DateTimeField(_("modified at"), auto_now=True)
+
+    class Meta:
+        db_table = "properties"
+        verbose_name = _("property")
+        verbose_name_plural = _("properties")
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.get_property_type_display()}"
