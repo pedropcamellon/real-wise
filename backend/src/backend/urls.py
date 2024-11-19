@@ -9,14 +9,15 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
 )
 
-from .api import UserViewSet
+from .api import UserViewSet, PropertyViewSet
 
 # Set admin site titles
 admin.site.site_header = settings.ADMIN_SITE_HEADER
 admin.site.site_title = settings.ADMIN_SITE_TITLE
 
 router = routers.DefaultRouter()
-router.register("users", UserViewSet, basename="api-users")
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'properties', PropertyViewSet, basename='property')
 
 urlpatterns = [
     path(
