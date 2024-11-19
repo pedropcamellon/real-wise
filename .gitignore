@@ -23,3 +23,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .ruff_cache
+
+# Static and media files
+backend/src/staticfiles/
+backend/src/static/
+backend/src/media/

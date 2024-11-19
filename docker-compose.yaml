@@ -10,12 +10,17 @@ services:
     env_file:
       - .env.backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 2s
       timeout: 2s
       retries: 10
   api:
-    command: bash -c "poetry install && poetry run python src/manage.py migrate && poetry run python src/manage.py runserver 0.0.0.0:8000"
+    command: >
+      bash -c "poetry install &&
+               mkdir -p src/staticfiles src/static src/media &&
+               poetry run python src/manage.py migrate &&
+               poetry run python src/manage.py collectstatic --noinput &&
+               poetry run python src/manage.py runserver 0.0.0.0:8000"
     build:
       context: backend
     expose:
@@ -26,6 +31,8 @@ services:
       - ./backend:/app
     env_file:
       - .env.backend
+    environment:
+      - DEBUG=1
     depends_on:
       db:
         condition: service_healthy
