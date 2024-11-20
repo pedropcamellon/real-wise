@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/providers/AuthProvider'
+import { ThemeProvider } from '@/providers/ThemeProvider'
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { twMerge } from 'tailwind-merge'
@@ -21,9 +22,11 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
         )}
       >
         <AuthProvider>
-          <div className="px-6">
-            <div className="container mx-auto my-12 max-w-6xl">{children}</div>
-          </div>
+          <ThemeProvider>
+            <div className="px-6">
+              <div className="container mx-auto my-12 max-w-6xl">{children}</div>
+            </div>
+          </ThemeProvider>
         </AuthProvider>
       </body>
     </html>
