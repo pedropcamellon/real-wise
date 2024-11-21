@@ -1,23 +1,25 @@
 'use client'
 
-import { FC } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+// Types
 import type { Property } from '@/modules/properties/types/'
+
+import { FC, useState } from 'react'
 import {
-  Button,
   IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
-  Tooltip,
+  Button,
+  Tooltip
 } from '@mui/material'
 import {
   MoreVert as MoreVertIcon,
   Edit as EditIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
 
 interface PropertyActionsProps {
   property: Property
@@ -25,6 +27,8 @@ interface PropertyActionsProps {
 
 export const PropertyActions: FC<PropertyActionsProps> = ({ property }) => {
   const { isAgent } = useAuth()
+  const router = useRouter()
+
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const open = Boolean(anchorEl)
 
@@ -38,11 +42,11 @@ export const PropertyActions: FC<PropertyActionsProps> = ({ property }) => {
 
   const handleEdit = () => {
     handleClose()
-    // Will implement edit functionality
+    router.push(`/properties/${property.id}/edit`)
   }
 
   const handleView = () => {
-    // Will implement view details
+    router.push(`/properties/${property.id}`)
   }
 
   return (

@@ -52,12 +52,13 @@ const getUserFriendlyError = (error: unknown): string => {
   return 'Something went wrong. Please try again later.'
 }
 
+// Singleton
+const propertiesApiClient = new PropertiesApiClient()
+
 export const useProperties = () => {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const propertiesApiClient = new PropertiesApiClient()
 
   const getAllProperties = useCallback(async (): Promise<Property[]> => {
     setIsLoading(true)
@@ -70,6 +71,22 @@ export const useProperties = () => {
       const userMessage = getUserFriendlyError(err)
       setError(userMessage)
       return []
+    } finally {
+      setIsLoading(false)
+    }
+  }, [propertiesApiClient])
+
+  const getProperty = useCallback(async (id: number): Promise<Property | null> => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const response = await propertiesApiClient.getProperty(id)
+      return response
+    } catch (err) {
+      const userMessage = getUserFriendlyError(err)
+      setError(userMessage)
+      return null
     } finally {
       setIsLoading(false)
     }
@@ -88,11 +105,28 @@ export const useProperties = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [router, propertiesApiClient])
+  }, [propertiesApiClient])
+
+  const updateProperty = useCallback(async (id: number, data: Partial<PropertyAPIPayloadCreate>) => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      return await propertiesApiClient.updateProperty(id, data)
+    } catch (err) {
+      const userMessage = getUserFriendlyError(err)
+      setError(userMessage)
+      return null
+    } finally {
+      setIsLoading(false)
+    }
+  }, [propertiesApiClient])
 
   return {
     createProperty,
     getAllProperties,
+    getProperty,
+    updateProperty,
     isLoading,
     error
   }

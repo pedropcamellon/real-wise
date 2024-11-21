@@ -35,8 +35,7 @@ export const PropertyCard = ({ property }: PropertyCardProps) => {
           {property.price ? formatPrice(property.price) : 'Price on request'}
         </Typography>
 
-        {/* TODO: Add property actions */}
-        {/* <PropertyActions property={property} /> */}
+        <PropertyActions property={property} />
       </CardContent>
     </Card>
   )

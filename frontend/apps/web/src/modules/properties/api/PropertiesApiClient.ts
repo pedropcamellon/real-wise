@@ -61,7 +61,8 @@ export class PropertiesApiClient implements PropertiesApi {
   async getProperty(id: number): Promise<ApiResponse<Property>> {
     try {
       const headers = await this.getAuthHeaders()
-      const response = await fetch(`${this.baseUrl}/properties/${id}`, {
+
+      const response = await fetch(`${this.baseUrl}/api/properties/${id}`, {
         method: 'GET',
         headers,
       })
