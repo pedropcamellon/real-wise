@@ -1,7 +1,7 @@
 import { Box, Container, Typography, Button } from '@mui/material'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { PropertyList } from '@/components/properties/list/PropertyList'
+import { PropertyList } from '@/modules/properties/components/list/PropertyList'
 import { Search as SearchIcon } from '@mui/icons-material'
 import Image from 'next/image'
 import Link from 'next/link'

@@ -1,7 +1,7 @@
 'use client'
 
 import { Container } from '@mui/material'
-import { PropertyList } from '@/components/properties/list/PropertyList'
+import { PropertyList } from '@/modules/properties/components/list/PropertyList'
 
 export default function PropertiesPage() {
   return (
