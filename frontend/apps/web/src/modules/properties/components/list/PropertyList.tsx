@@ -170,47 +170,33 @@ export const PropertyList: FC<PropertyListProps> = ({
           </Box>
 
           {/* Search and Filters */}
-          <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
-            <FormControl fullWidth variant="outlined">
-              <InputLabel>Search Properties</InputLabel>
-              <OutlinedInput
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                label="Search Properties"
-                placeholder="Search by title or address..."
-              />
-            </FormControl>
-
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Type</InputLabel>
-              <Select
-                value={typeFilter}
-                label="Type"
-                onChange={(e) => setTypeFilter(e.target.value as PropertyType | 'all')}
-              >
-                <MenuItem value="all">All Types</MenuItem>
-                <MenuItem value="residential">Residential</MenuItem>
-                <MenuItem value="commercial">Commercial</MenuItem>
-                <MenuItem value="industrial">Industrial</MenuItem>
-                <MenuItem value="land">Land</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={statusFilter}
-                label="Status"
-                onChange={(e) => setStatusFilter(e.target.value as PropertyStatus | 'all')}
-              >
-                <MenuItem value="all">All Status</MenuItem>
-                <MenuItem value="on_market">On Market</MenuItem>
-                <MenuItem value="off_market">Off Market</MenuItem>
-                <MenuItem value="under_contract">Under Contract</MenuItem>
-                <MenuItem value="sold">Sold</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={8}>
+              <FormControl fullWidth>
+                <InputLabel>Search Properties</InputLabel>
+                <OutlinedInput
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  label="Search Properties"
+                  placeholder="Search by title or address..."
+                />
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth>
+                <InputLabel>Type</InputLabel>
+                <Select
+                  value={typeFilter}
+                  label="Type"
+                  onChange={(e) => setTypeFilter(e.target.value as PropertyType | 'all')}
+                >
+                  <MenuItem value="all">All Types</MenuItem>
+                  <MenuItem value="residential">Residential</MenuItem>
+                  <MenuItem value="commercial">Commercial</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
         </Box>
       ) : (
         // Simple header for homepage
