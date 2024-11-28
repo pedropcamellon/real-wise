@@ -2,7 +2,6 @@
 import type { PropertyAPIPayloadCreate, Property } from '@/modules/properties/types/'
 
 import { useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { PropertiesApiClient } from '@/modules/properties/api/PropertiesApiClient'
 
 const getUserFriendlyError = (error: unknown): string => {

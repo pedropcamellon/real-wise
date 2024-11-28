@@ -1,5 +1,5 @@
 import { PropertyAPIPayloadCreate } from "./PropertyAPIPayloadCreate"
-import { PaginatedResponse } from "./PaginatedResponse"
+import { PaginatedResponse } from "@/types/PaginatedResponse"
 import { Property } from "./Property"
 import { PropertyApiResponse } from "./PropertyApiResponse"
 

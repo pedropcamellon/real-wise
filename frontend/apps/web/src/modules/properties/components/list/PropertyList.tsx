@@ -41,23 +41,11 @@ export const PropertyList: FC<PropertyListProps> = ({
 
   const router = useRouter()
 
-  const { getAllProperties, isLoading, error } = useProperties()
-
-  const [properties, setProperties] = useState<Property[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
-  const [typeFilter, setTypeFilter] = useState<PropertyType | 'all'>('all')
-  const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'all'>('all')
   const [showError, setShowError] = useState(false)
 
-  // Add debounce effect for search
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 500) // 500ms delay
-
-    return () => clearTimeout(timer)
-  }, [searchTerm])
+  // Properties
+  const { getAllProperties, isLoading, error } = useProperties()
+  const [properties, setProperties] = useState<Property[]>([])
 
   const fetchProperties = useCallback(async () => {
     try {
@@ -71,6 +59,23 @@ export const PropertyList: FC<PropertyListProps> = ({
   useEffect(() => {
     fetchProperties()
   }, [])
+
+  // Search
+  const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+
+  // Add debounce effect for search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500) // 500ms delay
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Filters
+  const [typeFilter, setTypeFilter] = useState<PropertyType | 'all'>('all')
+  const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'all'>('all')
 
   const filteredProperties = useMemo(() => {
     let filtered = properties
