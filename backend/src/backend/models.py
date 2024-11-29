@@ -1,4 +1,5 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -146,3 +147,11 @@ class Property(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.get_property_type_display()}"
+
+    def clean(self):
+        """Validate model fields"""
+        super().clean()
+        if self.price and self.price <= 0:
+            raise ValidationError({"price": _("Price must be positive")})
+        if self.size and self.size <= 0:
+            raise ValidationError({"size": _("Size must be positive")})
