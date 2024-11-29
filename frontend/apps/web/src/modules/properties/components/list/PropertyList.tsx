@@ -1,23 +1,19 @@
 'use client'
 
 // Types
-import type { PropertyType, PropertyStatus, Property } from '@/modules/properties/types/'
+import type { Property, PropertyFilterState } from '@/modules/properties/types/'
 
-import { FC, useState, useMemo, useEffect, useCallback } from 'react'
+import { type FC, type KeyboardEvent, useState, useMemo, useEffect, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { PropertyCard } from './PropertyCard'
 import {
   Typography,
   Grid,
   Button,
-  MenuItem,
   Box,
-  FormControl,
-  InputLabel,
-  Select,
   IconButton,
   Skeleton,
-  OutlinedInput
+  Container
 } from '@mui/material'
 import {
   Add as AddIcon,
@@ -27,16 +23,16 @@ import {
 } from '@mui/icons-material'
 import { useRouter } from 'next/navigation'
 import { useProperties } from '@/modules/properties/hooks/useProperties'
+import { PropertySearch } from '../PropertySearch'
+import { PropertyFilterToggle } from '../filters/PropertyFilterToggle'
+import { PropertyFilterPanel } from '../filters/PropertyFilterPanel'
 
 interface PropertyListProps {
   showFullFeatures?: boolean
   filter?: 'all' | 'hot'
 }
 
-export const PropertyList: FC<PropertyListProps> = ({
-  showFullFeatures = false,
-  filter = 'all'
-}) => {
+export const PropertyList: FC<PropertyListProps> = () => {
   const { isAgent } = useAuth()
 
   const router = useRouter()
@@ -44,68 +40,134 @@ export const PropertyList: FC<PropertyListProps> = ({
   const [showError, setShowError] = useState(false)
 
   // Properties
-  const { getAllProperties, isLoading, error } = useProperties()
+  const { getAllProperties, isLoading: isLoadingProperties, error } = useProperties()
   const [properties, setProperties] = useState<Property[]>([])
+
+  // Search state
+  const [searchTerm, setSearchTerm] = useState('')
+  const [appliedSearchTerm, setAppliedSearchTerm] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+
+  // Filter states
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [filterState, setFilterState] = useState<PropertyFilterState>({
+    page: 1,
+    pageSize: 10
+  })
+  const [appliedFilters, setAppliedFilters] = useState<PropertyFilterState>({
+    page: 1,
+    pageSize: 10
+  })
+  const [isApplyingFilters, setIsApplyingFilters] = useState(false)
+
+  // Utility functions
+  const buildQueryString = useCallback((filters: PropertyFilterState): string => {
+    const params = new URLSearchParams()
+
+    if (appliedSearchTerm) params.append('search', appliedSearchTerm.trim())
+    if (filters.propertyType) params.append('property_type', filters.propertyType)
+    if (filters.propertyStatus) params.append('property_status', filters.propertyStatus)
+    if (filters.priceRange?.min) params.append('min_price', filters.priceRange.min.toString())
+    if (filters.priceRange?.max) params.append('max_price', filters.priceRange.max.toString())
+    if (filters.sizeRange?.min) params.append('min_size', filters.sizeRange.min.toString())
+    if (filters.sizeRange?.max) params.append('max_size', filters.sizeRange.max.toString())
+    if (filters.bedrooms) params.append('bedrooms', filters.bedrooms.toString())
+    if (filters.bathrooms) params.append('bathrooms', filters.bathrooms.toString())
+
+    return params.toString()
+  }, [appliedSearchTerm])
 
   const fetchProperties = useCallback(async () => {
     try {
-      const data = await getAllProperties()
-      setProperties(data)
+      setShowError(false)
+      const queryString = buildQueryString(appliedFilters)
+      const { page, pageSize } = appliedFilters
+      const results = await getAllProperties(page, pageSize, queryString)
+      setProperties(results)
     } catch (err) {
+      console.error('[PropertyList] Error fetching properties:', err)
       setShowError(true)
     }
-  }, [getAllProperties])
+  }, [getAllProperties, appliedFilters, buildQueryString])
 
-  useEffect(() => {
-    fetchProperties()
+  const handleSearchSubmit = useCallback(async () => {
+    try {
+      setIsSearching(true)
+      setAppliedSearchTerm(searchTerm)
+      await fetchProperties()
+    } finally {
+      setIsSearching(false)
+    }
+  }, [fetchProperties, searchTerm])
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchTerm(value)
   }, [])
 
-  // Search
-  const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
+  const handleSearchKeyDown = useCallback((event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleSearchSubmit()
+    }
+  }, [handleSearchSubmit])
 
-  // Add debounce effect for search
+  const handleFilterChange = useCallback((newFilters: Partial<PropertyFilterState>) => {
+    setFilterState(prev => ({ ...prev, ...newFilters }))
+  }, [])
+
+  const handleApplyFilters = useCallback(async () => {
+    setIsApplyingFilters(true)
+    try {
+      setAppliedFilters(filterState)
+      await fetchProperties()
+    } finally {
+      setIsApplyingFilters(false)
+      setIsFilterOpen(false)
+    }
+  }, [filterState, fetchProperties])
+
+  const handleClearFilters = useCallback(async () => {
+    setIsApplyingFilters(true)
+    try {
+      const initialState = {
+        page: 1,
+        pageSize: 10
+      }
+      setFilterState(initialState)
+      setAppliedFilters(initialState)
+      setSearchTerm('')
+      setAppliedSearchTerm('')
+      await fetchProperties()
+    } finally {
+      setIsApplyingFilters(false)
+    }
+  }, [fetchProperties])
+
+  // Initial fetch and filter changes trigger fetch
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm)
-    }, 500) // 500ms delay
+    fetchProperties()
+  }, [fetchProperties, appliedFilters])
 
-    return () => clearTimeout(timer)
-  }, [searchTerm])
-
-  // Filters
-  const [typeFilter, setTypeFilter] = useState<PropertyType | 'all'>('all')
-  const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'all'>('all')
-
+  // Memoized values
   const filteredProperties = useMemo(() => {
-    let filtered = properties
+    return properties
+  }, [properties])
 
-    if (filter === 'hot') {
-      // For homepage, show only top 3 hot properties
-      return filtered
-        .filter(p => p.status === 'on_market')
-        .slice(0, 3)
-    }
-
-    if (!showFullFeatures) {
-      return filtered
-    }
-
-    return filtered.filter((property) => {
-      const matchesSearch = !debouncedSearchTerm ||
-        property.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        property.address.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-
-      const matchesType = typeFilter === 'all' || property.property_type === typeFilter
-
-      const matchesStatus = statusFilter === 'all' || property.status === statusFilter
-
-      return matchesSearch && matchesType && matchesStatus
-    })
-  }, [debouncedSearchTerm, typeFilter, statusFilter, showFullFeatures, filter, properties])
+  // Error handling
+  if (showError) {
+    return (
+      <Container maxWidth="lg">
+        <Box sx={{ py: 4 }}>
+          <Typography color="error" align="center">
+            {error || 'Failed to load properties. Please try again later.'}
+          </Typography>
+        </Box>
+      </Container>
+    )
+  }
 
   return (
     <>
+      {/* Error Alert */}
       {showError && (
         <Box
           sx={{
@@ -145,75 +207,78 @@ export const PropertyList: FC<PropertyListProps> = ({
         </Box>
       )}
 
-      {showFullFeatures ? (
-        // Full header for properties page
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-            <Box display="flex" alignItems="center" gap={1}>
-              <IconButton
-                onClick={() => router.push('/')}
-                aria-label="back to previous page"
-                sx={{ color: 'text.primary' }}
-              >
-                <ArrowBack />
-              </IconButton>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <IconButton
+              onClick={() => router.push('/')}
+              aria-label="back to previous page"
+              sx={{ color: 'text.primary' }}
+            >
+              <ArrowBack />
+            </IconButton>
 
-              <Typography variant="h4" component="h1" fontWeight="bold">
-                Properties
-              </Typography>
-            </Box>
-
-            {isAgent && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => router.push('/properties/add')}
-              >
-                Add Property
-              </Button>
-            )}
+            <Typography variant="h4" component="h1" fontWeight="bold">
+              Properties
+            </Typography>
           </Box>
 
-          {/* Search and Filters */}
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={8}>
-              <FormControl fullWidth>
-                <InputLabel>Search Properties</InputLabel>
-                <OutlinedInput
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  label="Search Properties"
-                  placeholder="Search by title or address..."
-                />
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  value={typeFilter}
-                  label="Type"
-                  onChange={(e) => setTypeFilter(e.target.value as PropertyType | 'all')}
-                >
-                  <MenuItem value="all">All Types</MenuItem>
-                  <MenuItem value="residential">Residential</MenuItem>
-                  <MenuItem value="commercial">Commercial</MenuItem>
-                </Select>
-              </FormControl>
+          {isAgent && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => router.push('/properties/add')}
+            >
+              Add Property
+            </Button>
+          )}
+        </Box>
+
+        {/* Search */}
+        <Box sx={{ mb: 1 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs>
+              <PropertySearch
+                isLoading={isSearching}
+                onChange={handleSearchChange}
+                onKeyDown={handleSearchKeyDown}
+                onSearch={handleSearchSubmit}
+                value={searchTerm}
+              />
             </Grid>
           </Grid>
         </Box>
-      ) : (
-        // Simple header for homepage
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" component="h2" gutterBottom>
-            Hot Properties This Week
-          </Typography>
+
+        {/* Filter Toggle */}
+        <Box sx={{ mb: 2 }}>
+          <Grid item>
+            <PropertyFilterToggle
+              onToggle={() => setIsFilterOpen(true)}
+              isOpen={Object.keys(appliedFilters).length > 2}
+            />
+          </Grid>
+        </Box>
+      </Box>
+
+      {/* Filter Panel */}
+      {isFilterOpen && (
+        <Box>
+          <PropertyFilterPanel
+            isOpen={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            onFilterChange={handleFilterChange}
+            currentFilters={filterState}
+            onClearFilters={handleClearFilters}
+            onApplyFilters={handleApplyFilters}
+            isLoading={isApplyingFilters}
+          />
         </Box>
       )}
 
-      {/* Property Grid */}
-      {isLoading ? (
+      {/* Content Section */}
+      {isLoadingProperties ? (
+        // Loading State
         <Grid container spacing={3}>
           {[1, 2, 3].map((key) => (
             <Grid item xs={12} sm={6} md={4} key={key}>
@@ -222,6 +287,7 @@ export const PropertyList: FC<PropertyListProps> = ({
           ))}
         </Grid>
       ) : error ? (
+        // Error State
         <Box
           sx={{
             textAlign: 'center',
@@ -250,6 +316,7 @@ export const PropertyList: FC<PropertyListProps> = ({
           </Button>
         </Box>
       ) : filteredProperties.length > 0 ? (
+        // Properties Grid
         <Grid container spacing={3}>
           {filteredProperties.map((property) => (
             <Grid item xs={12} sm={6} md={4} key={property.id}>
@@ -258,6 +325,7 @@ export const PropertyList: FC<PropertyListProps> = ({
           ))}
         </Grid>
       ) : (
+        // Empty State
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography color="text.secondary">
             No properties found matching your criteria.
