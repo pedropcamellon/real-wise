@@ -1,9 +1,7 @@
 import { Box, Container, Typography, Button } from '@mui/material'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { PropertyList } from '@/modules/properties/components/list/PropertyList'
 import { Search as SearchIcon } from '@mui/icons-material'
-import Image from 'next/image'
 import Link from 'next/link'
 import PagesOverview from '@/components/PagesOverview'
 import UserSession from '@/components/UserSession'
@@ -111,12 +109,6 @@ export default async function Home() {
           )}
         </Container>
       </Box>
-
-      {session && (
-        <Container maxWidth="lg" sx={{ mt: 8, mb: 8 }}>
-          <PropertyList />
-        </Container>
-      )}
     </>
   )
 }
