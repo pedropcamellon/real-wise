@@ -35,14 +35,21 @@ export class PropertiesApiClient implements PropertiesApi {
     }
   }
 
-  async getProperties(page = 1, limit = 10): Promise<PaginatedResponse<Property>> {
+  async getProperties(
+    page: number = 1,
+    limit: number = 10,
+    queryString?: string
+  ): Promise<PaginatedResponse<Property>> {
     try {
       if (!this.baseUrl) {
         throw new Error('Base URL is not defined')
       }
 
       const headers = await this.getAuthHeaders()
-      const response = await fetch(`${this.baseUrl}/api/properties?page=${page}&limit=${limit}`, {
+      const baseUrl = `${this.baseUrl}/api/properties?page=${page}&limit=${limit}`
+      const url = queryString ? `${baseUrl}&${queryString}` : baseUrl
+
+      const response = await fetch(url, {
         method: 'GET',
         headers,
       })

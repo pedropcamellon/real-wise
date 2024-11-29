@@ -55,16 +55,20 @@ const getUserFriendlyError = (error: unknown): string => {
 const propertiesApiClient = new PropertiesApiClient()
 
 export const useProperties = () => {
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
 
-  const getAllProperties = useCallback(async (): Promise<Property[]> => {
+  const getAllProperties = useCallback(async (
+    page: number = 1,
+    limit: number = 10,
+    queryString?: string
+  ): Promise<Property[]> => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await propertiesApiClient.getProperties()
+      const response = await propertiesApiClient.getProperties(page, limit, queryString)
       return response.results || []
     } catch (err) {
       const userMessage = getUserFriendlyError(err)
@@ -73,7 +77,7 @@ export const useProperties = () => {
     } finally {
       setIsLoading(false)
     }
-  }, [propertiesApiClient])
+  }, [])
 
   const getProperty = useCallback(async (id: number): Promise<Property | null> => {
     setIsLoading(true)
